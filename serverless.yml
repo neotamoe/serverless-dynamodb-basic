@@ -1,0 +1,64 @@
+service: serverless-dynamodb-basic
+
+custom:
+  settings:
+    ITEMS_DYNAMODB_TABLE: serverless-dyanamodb-basic-items-table
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  profile: therealneotamoe
+  region: us-east-2
+  environment: ${self:custom.settings}
+
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:GetItem"
+        - "dynamodb:PutItem"
+        - "dynamodb:UpdateItem"
+        - "dynamodb:DeleteItem"
+      Resource: 
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.ITEMS_DYNAMODB_TABLE}"
+
+functions:
+  saveItem:
+    handler: handler.saveItem
+    events:
+      - http:
+          path: item
+          method: post
+  getItem:
+    handler: handler.getItem
+    events:
+      - http:
+          path: item/{itemId}
+          method: get
+  updateItem:
+    handler: handler.updateItem
+    events:
+      - http:
+          path: item/{itemId}
+          method: put
+  deleteItem:
+    handler: handler.deleteItem
+    events:
+      - http:
+          path: item/{itemId}
+          method: delete
+
+resources:
+  Resources:
+    ImagesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: "itemId"
+            AttributeType: "S"
+        KeySchema:
+        - AttributeName: "itemId"
+          KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.settings.ITEMS_DYNAMODB_TABLE}
